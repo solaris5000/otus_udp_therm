@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "client",
+    "tdtp",
+    "server",
+    "thermomether",
+]
