@@ -1,21 +1,45 @@
-use std::net::{UdpSocket, ToSocketAddrs};
+use std::net::{UdpSocket};
 
-pub struct ThermServer {
-    pub tcp: TcpListener,
+pub struct ThermometerServer {
+    udp : UdpSocket,
 }
 
-impl ThermServer {
-    pub fn start_server<Addrs>(addr: Addrs) -> SocketServer
-    where
-        Addrs: ToSocketAddrs,
-    {
-        let temp = TcpListener::bind(addr);
-        SocketServer { tcp: temp.unwrap() }
+impl ThermometerServer {
+    pub fn start_internal() -> ThermometerServer{
+        ThermometerServer {udp : UdpSocket::bind("127.0.0.1:10001").unwrap()}
     }
-}
 
-impl std::fmt::Debug for SocketServer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "this is a socket")
+    pub fn start_incoming() -> ThermometerServer{
+        ThermometerServer {udp : UdpSocket::bind("127.0.0.1:10002").unwrap()}
+    }
+
+    pub fn listen(&self) {
+        let mut buf = [0; 32];
+
+        loop {
+            let rt = self.udp.recv_from(&mut buf);
+            match rt {
+                Err(e) => { 
+                    println!("Somthing went wrong\n{:?}", e);
+                },
+                Ok(r) => { 
+                    let size = r.0; 
+                    let sender = r.1;
+
+                    println!("Recived {} bytes from {}\nData {:?}", &size, &sender, &buf);
+                    if &size == &(3 as usize) {
+                        break;
+                    }
+                }
+
+                
+            }
+        };
+
+        println!("Listener closed");
+    }
+
+    pub fn renew() {
+
     }
 }
