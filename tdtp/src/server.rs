@@ -18,7 +18,7 @@ impl ThermometerServer {
     }
 
     // сделать 2 разных прослушивателя, 1 для клиента 1 для термометра
-    pub fn listen_term(&self, temp_data: Arc<RwLock<f32>>) {
+    pub fn listen_term(&self, temp_data: Arc<RwLock<i32>>) {
         let mut buf = [0u8; 4];
 
         loop {
@@ -30,21 +30,21 @@ impl ThermometerServer {
                 Ok(r) => {
                     let size = r.0;
                     let sender = r.1;
+                    let data = i32::from_be_bytes(buf);
                     println!(
                         "Recived {} bytes from {}\nTemperature: {}",
                         &size,
                         &sender,
-                        i32::from_be_bytes(buf)
+                        &data,
                     );
-                    if &size == &(3 as usize) {
-                        break;
-                    }
+                    let mut temp = temp_data.write().unwrap();
+                    *temp = data;
                 }
             }
         }
     }
-    pub fn listen_client(&self, temp_data: Arc<RwLock<f32>>) {
-        let mut buf = [0; 32];
+    pub fn listen_client(&self, temp_data: Arc<RwLock<i32>>) {
+        let mut buf = [0; 4];
 
         loop {
             let rt = self.udp.recv_from(&mut buf);
@@ -67,12 +67,22 @@ impl ThermometerServer {
                     if &size == &(3 as usize) {
                         break;
                     }
+
+                    match msg[..].trim() {
+                        "TEMP" => {
+                            let data = temp_data.read().unwrap();
+                            println!("Sending recponce: {:?}", &data.to_be_bytes());
+                            let _ = self.udp.send_to(&data.to_be_bytes(), &sender);
+                        },
+                        _ => {
+                            println!("Sending recponce: {:?}", "WCMD");
+                            let _ = self.udp.send_to(b"WCMD", &sender);
+                        },
+                    }
                 }
             }
         }
 
         println!("Listener closed");
     }
-
-    pub fn renew(term_data: Arc<RwLock<f32>>) {}
 }

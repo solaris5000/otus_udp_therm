@@ -7,7 +7,7 @@ fn main() {
     let client_server = ThermometerServer::start_incoming();
     let term_server = ThermometerServer::start_internal();
 
-    let temp_data = Arc::new(RwLock::new(0.0f32));
+    let temp_data = Arc::new(RwLock::new(0));
 
     thread::scope(|s| {
         s.spawn(|| {

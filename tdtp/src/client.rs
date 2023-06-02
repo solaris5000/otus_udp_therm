@@ -5,18 +5,21 @@ pub enum ClientCommand {
     GetTemp,
 }
 
-pub fn read_responce<Reader: Read>(mut reader: Reader) -> String {
-    "recponce".to_string()
+pub struct Client{
+    pub udp : UdpSocket,
 }
 
-pub fn send_command<ADR>(cmd: ClientCommand, target: ADR)
+impl Client {
+    pub fn send_command<ADR>(&self, cmd: ClientCommand, target: ADR)
 where
     ADR: ToSocketAddrs,
 {
-    let udp = UdpSocket::bind("127.0.0.1:9992").unwrap();
     match cmd {
         ClientCommand::GetTemp => {
-            let _ = udp.send_to(b"TEMP", target);
+                let _ = self.udp.send_to(b"TEMP", target);
         }
     }
 }
+}
+
+
