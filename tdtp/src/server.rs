@@ -33,9 +33,7 @@ impl ThermometerServer {
                     let data = i32::from_be_bytes(buf);
                     println!(
                         "Recived {} bytes from {}\nTemperature: {}",
-                        &size,
-                        &sender,
-                        &data,
+                        &size, &sender, &data,
                     );
                     let mut temp = temp_data.write().unwrap();
                     *temp = data;
@@ -73,11 +71,11 @@ impl ThermometerServer {
                             let data = temp_data.read().unwrap();
                             println!("Sending recponce: {:?}", &data.to_be_bytes());
                             let _ = self.udp.send_to(&data.to_be_bytes(), &sender);
-                        },
+                        }
                         _ => {
                             println!("Sending recponce: {:?}", "WCMD");
                             let _ = self.udp.send_to(b"WCMD", &sender);
-                        },
+                        }
                     }
                 }
             }

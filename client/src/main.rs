@@ -1,9 +1,11 @@
-use std::{io, thread, net::UdpSocket};
+use std::{io, net::UdpSocket, thread};
 
 use tdtp::client;
 
 fn main() {
-    let client = client::Client{udp: UdpSocket::bind("127.0.0.1:9992").unwrap()};
+    let client = client::Client {
+        udp: UdpSocket::bind("127.0.0.1:9992").unwrap(),
+    };
 
     loop {
         println!("----------\n1) Get current temerature\n_) Exit");
@@ -15,25 +17,24 @@ fn main() {
             1 => {
                 let mut buf = [0u8; 4];
                 //thread::scope(|s|{
-                   // s.spawn(||{
-                        client.send_command(client::ClientCommand::GetTemp, "127.0.0.1:10002");
-                        match client.udp.recv(&mut buf) {
-                            Err(e) => {
-                                println!("Something went wrong: {:?}", e);
-                            },
-                            Ok(_) => {
-                                let temp = i32::from_be_bytes(buf);
-                                println!("Current temperature: {}", temp);
-                            }
-                        }
-                        
-                  //  });
-              //  });
-            },
+                // s.spawn(||{
+                client.send_command(client::ClientCommand::GetTemp, "127.0.0.1:10002");
+                match client.udp.recv(&mut buf) {
+                    Err(e) => {
+                        println!("Something went wrong: {:?}", e);
+                    }
+                    Ok(_) => {
+                        let temp = i32::from_be_bytes(buf);
+                        println!("Current temperature: {}", temp);
+                    }
+                }
+
+                //  });
+                //  });
+            }
             _ => {
                 break;
             }
         }
-        
     }
 }
