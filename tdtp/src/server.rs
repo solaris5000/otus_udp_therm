@@ -1,5 +1,6 @@
 use tokio::net::UdpSocket;
-use std::sync::{Arc, RwLock};
+use tokio::sync::Mutex;
+use std::sync::{Arc};
 pub struct ThermometerServer {
     pub udp: UdpSocket,
 }
@@ -18,7 +19,7 @@ impl ThermometerServer {
     }
 
     // сделать 2 разных прослушивателя, 1 для клиента 1 для термометра
-    pub async fn listen_term(connection : &UdpSocket, temp_data: Arc<RwLock<i32>>) {
+    pub async fn listen_term(connection : &UdpSocket, temp_data: Arc<Mutex<i32>>) {
         let mut buf = [0u8; 4];
 
         loop {
@@ -35,15 +36,16 @@ impl ThermometerServer {
                         "Recived {} bytes from {}\nTemperature: {}",
                         &size, &sender, &data,
                     );
-                    let mut temp = temp_data.write().unwrap();
+                    let mut temp = temp_data.lock().await;
                     *temp = data;
                 }
             }
         }
     }
-    pub async fn listen_client(connection : &UdpSocket, temp_data: Arc<RwLock<i32>>) {
+    pub async fn listen_client(connection : Arc<ThermometerServer>, temp_data: Arc<Mutex<i32>>) {
+        println!("AAAAA");
         let mut buf = [0; 4];
-            let rt = connection.recv_from(&mut buf).await;
+            let rt = connection.udp.recv_from(&mut buf).await;
             match rt {
                 Err(e) => {
                     println!("Somthing went wrong\n{:?}", e);
@@ -66,13 +68,13 @@ impl ThermometerServer {
 
                     match msg[..].trim() {
                         "TEMP" => {
-                            let data = temp_data.read().unwrap();
+                            let data = temp_data.lock().await;
                             println!("Sending recponce: {:?}", &data.to_be_bytes());
-                            let _ = connection.send_to(&data.to_be_bytes(), &sender).await;
+                            let _ = connection.udp.send_to(&data.to_be_bytes(), &sender).await;
                         }
                         _ => {
                             println!("Sending recponce: {:?}", "WCMD");
-                            let _ = connection.send_to(b"WCMD", &sender).await;
+                            let _ = connection.udp.send_to(b"WCMD", &sender).await;
                         }
                     }
                 }

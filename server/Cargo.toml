@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 tdtp = {path = "../tdtp"}
-tokio = { version = "1.15.0", features = ["net", "macros", "rt", "fs"] }
+tokio = { version = "1.15.0", features = ["net", "macros", "rt", "fs", "sync", "time"] }
