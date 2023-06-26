@@ -1,28 +1,28 @@
-use std::net::UdpSocket;
+use tokio::net::UdpSocket;
 use std::sync::{Arc, RwLock};
 pub struct ThermometerServer {
-    udp: UdpSocket,
+    pub udp: UdpSocket,
 }
 
 impl ThermometerServer {
-    pub fn start_internal() -> ThermometerServer {
+    pub async fn start_internal() -> ThermometerServer {
         ThermometerServer {
-            udp: UdpSocket::bind("127.0.0.1:10001").unwrap(),
+            udp: UdpSocket::bind("127.0.0.1:10001").await.unwrap(),
         }
     }
 
-    pub fn start_incoming() -> ThermometerServer {
+    pub async fn start_incoming() -> ThermometerServer {
         ThermometerServer {
-            udp: UdpSocket::bind("127.0.0.1:10002").unwrap(),
+            udp: UdpSocket::bind("127.0.0.1:10002").await.unwrap(),
         }
     }
 
     // сделать 2 разных прослушивателя, 1 для клиента 1 для термометра
-    pub fn listen_term(&self, temp_data: Arc<RwLock<i32>>) {
+    pub async fn listen_term(connection : &UdpSocket, temp_data: Arc<RwLock<i32>>) {
         let mut buf = [0u8; 4];
 
         loop {
-            let rt = self.udp.recv_from(&mut buf);
+            let rt = connection.recv_from(&mut buf).await;
             match rt {
                 Err(e) => {
                     println!("Somthing went wrong\n{:?}", e);
@@ -41,11 +41,9 @@ impl ThermometerServer {
             }
         }
     }
-    pub fn listen_client(&self, temp_data: Arc<RwLock<i32>>) {
+    pub async fn listen_client(connection : &UdpSocket, temp_data: Arc<RwLock<i32>>) {
         let mut buf = [0; 4];
-
-        loop {
-            let rt = self.udp.recv_from(&mut buf);
+            let rt = connection.recv_from(&mut buf).await;
             match rt {
                 Err(e) => {
                     println!("Somthing went wrong\n{:?}", e);
@@ -63,22 +61,21 @@ impl ThermometerServer {
                         &msg[..].trim_end()
                     );
                     if &size == &(3 as usize) {
-                        break;
+                        return;
                     }
 
                     match msg[..].trim() {
                         "TEMP" => {
                             let data = temp_data.read().unwrap();
                             println!("Sending recponce: {:?}", &data.to_be_bytes());
-                            let _ = self.udp.send_to(&data.to_be_bytes(), &sender);
+                            let _ = connection.send_to(&data.to_be_bytes(), &sender).await;
                         }
                         _ => {
                             println!("Sending recponce: {:?}", "WCMD");
-                            let _ = self.udp.send_to(b"WCMD", &sender);
+                            let _ = connection.send_to(b"WCMD", &sender).await;
                         }
                     }
                 }
-            }
         }
 
         println!("Listener closed");

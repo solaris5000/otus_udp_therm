@@ -1,25 +1,31 @@
-use std::net::{ToSocketAddrs, UdpSocket};
-use std::sync::{Arc, RwLock};
-use std::thread;
-use tdtp::server::*;
+use std::{sync::{Arc, RwLock}, rc::Rc};
+use tdtp::server::{*, self};
 
-fn main() {
-    let client_server = ThermometerServer::start_incoming();
-    let term_server = ThermometerServer::start_internal();
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    let client_server = ThermometerServer::start_incoming().await;
+    let term_server = ThermometerServer::start_internal().await;
+    
+    let temp_data = Arc::new(RwLock::new(10));
 
-    let temp_data = Arc::new(RwLock::new(0));
+    let arc_term = Arc::new(term_server);
+    let arc_client = Arc::new(client_server);
 
-    thread::scope(|s| {
-        s.spawn(|| {
-            client_server.listen_client(temp_data.clone());
-        });
-
-        s.spawn(|| {
-            term_server.listen_term(temp_data.clone());
-        });
-
-        println!("servers started");
+    let term_server = arc_term.clone();
+    let server_data = temp_data.clone();
+    tokio::spawn( async move {
+        ThermometerServer::listen_term(&term_server.udp, server_data).await;
     });
+
+    loop {
+        let client_server = arc_client.clone();
+
+        let client_data = temp_data.clone();
+        ThermometerServer::listen_client(&client_server.udp, client_data).await;
+
+        println!("test");
+    }
+    
 
     println!("servers closed");
 }

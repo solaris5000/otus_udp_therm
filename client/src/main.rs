@@ -4,20 +4,21 @@ use tdtp::client;
 
 fn main() {
     let client = client::Client {
-        udp: UdpSocket::bind("127.0.0.1:9992").unwrap(),
+        udp: UdpSocket::bind("127.0.0.1:0").unwrap(),
     };
 
+    let mut buf = String::new();
     loop {
         println!("----------\n1) Get current temerature\n_) Exit");
-        let mut buf = String::new();
+        buf.clear();
         let _ = io::stdin().read_line(&mut buf);
         let input = buf.trim().parse::<i32>().unwrap();
         println!("Chosed: {}", &input);
         match input {
             1 => {
                 let mut buf = [0u8; 4];
-                //thread::scope(|s|{
-                // s.spawn(||{
+                thread::scope(|s|{
+                 s.spawn(||{
                 client.send_command(client::ClientCommand::GetTemp, "127.0.0.1:10002");
                 match client.udp.recv(&mut buf) {
                     Err(e) => {
@@ -29,8 +30,8 @@ fn main() {
                     }
                 }
 
-                //  });
-                //  });
+                  });
+                  });
             }
             _ => {
                 break;
