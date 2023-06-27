@@ -1,5 +1,5 @@
 use std::io::Read;
-use std::net::{ToSocketAddrs, UdpSocket};
+use tokio::net::{ToSocketAddrs, UdpSocket};
 
 pub enum ClientCommand {
     GetTemp,
@@ -10,13 +10,13 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn send_command<ADR>(&self, cmd: ClientCommand, target: ADR)
+    pub async fn send_command<ADR>(&self, cmd: ClientCommand, target: ADR) -> Result<usize, std::io::Error>
     where
         ADR: ToSocketAddrs,
     {
         match cmd {
             ClientCommand::GetTemp => {
-                let _ = self.udp.send_to(b"TEMP", target);
+                self.udp.send_to(b"TEMP", target).await
             }
         }
     }

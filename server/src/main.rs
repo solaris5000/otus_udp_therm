@@ -1,39 +1,38 @@
-use std::{sync::{Arc, RwLock}, rc::Rc, thread, time::Duration};
-use tdtp::server::{*, self};
+use std::{
+    sync::Arc,
+    time::Duration,
+};
+use tdtp::server::{self, *};
 use tokio::sync::Mutex;
-use tokio::time;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
+    // Сокет, принимающий пользовательский ввод с клиента
     let client_server = ThermometerServer::start_incoming().await;
+
+    //сокет, принимающий датаграммы от термометра
     let term_server = ThermometerServer::start_internal().await;
 
     let client_server = Arc::new(client_server);
-    
-    let temp_data = Arc::new(Mutex::new(10));
+
+    let temp_data = Arc::new(Mutex::new(0));
     let therm_data = temp_data.clone();
 
-    //let arc_term = Arc::new(term_server);
-    //let arc_client = Arc::new(client_server);
-
-    tokio::spawn( async move {
+    tokio::spawn(async move {
         ThermometerServer::listen_term(&term_server.udp, therm_data.clone()).await;
     });
 
     loop {
-
         let client_data = temp_data.clone();
         let udp = client_server.clone();
 
-       // tokio::spawn( async move {
-            let result = tokio::time::timeout(Duration::from_secs(1), 
-       (async {ThermometerServer::listen_client(udp, client_data).await})).await;
-        //});
-        //println!("{:?}", result);
-        println!("test");
-        //thread::sleep(Duration::from_secs(1));
+        let _ = tokio::time::timeout(Duration::from_secs(1), async {
+            // раскоментируй строку ниже, чтобы получить ошибку таймаута у клиента ;)
+            // tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            ThermometerServer::listen_client(udp, client_data).await
+        })
+        .await;
     }
-    
 
     println!("servers closed");
 }

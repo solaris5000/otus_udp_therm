@@ -13,6 +13,7 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "tdtp",
+ "tokio",
 ]
 
 [[package]]
@@ -97,6 +98,7 @@ name = "thermomether"
 version = "0.1.0"
 dependencies = [
  "tdtp",
+ "tokio",
 ]
 
 [[package]]
