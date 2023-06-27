@@ -1,8 +1,5 @@
-use std::{
-    sync::Arc,
-    time::Duration,
-};
-use tdtp::server::{self, *};
+use std::{sync::Arc, time::Duration};
+use tdtp::server::*;
 use tokio::sync::Mutex;
 
 #[tokio::main(flavor = "current_thread")]
@@ -34,5 +31,5 @@ async fn main() {
         .await;
     }
 
-    println!("servers closed");
+    //println!("servers closed");
 }

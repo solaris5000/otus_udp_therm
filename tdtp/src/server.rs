@@ -61,7 +61,7 @@ impl ThermometerServer {
                     &sender,
                     &msg[..].trim_end()
                 );
-                if &size == &(3 as usize) {
+                if size == 3_usize {
                     return;
                 }
 

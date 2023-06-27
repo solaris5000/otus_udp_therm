@@ -26,28 +26,30 @@ async fn main() {
             1 => {
                 let mut buf = [0u8; 4];
 
-                let result = tokio::time::timeout(timeout, 
-                    async {
-                        match arc_client.send_command(client::ClientCommand::GetTemp, "127.0.0.1:10002").await {
-                            Err(e) => {println!("Send err: {e}")},
-                            Ok(_) => {},
-                        };
+                let result = tokio::time::timeout(timeout, async {
+                    if let Err(e) = arc_client
+                        .send_command(client::ClientCommand::GetTemp, "127.0.0.1:10002")
+                        .await
+                    {
+                        println!("Send err: {e}")
+                    };
 
-                        match arc_client.udp.recv(&mut buf).await {
-                            Err(e) => {println!("Send err: {e}")},
-                            Ok(_) => {
-                                let temp = i32::from_be_bytes(buf);
-                                println!("Current temperature: {}", temp);
-                            },
-                        };
-                    }
-                ).await;
+                    match arc_client.udp.recv(&mut buf).await {
+                        Err(e) => {
+                            println!("Send err: {e}")
+                        }
+                        Ok(_) => {
+                            let temp = i32::from_be_bytes(buf);
+                            println!("Current temperature: {}", temp);
+                        }
+                    };
+                })
+                .await;
 
-                match result {
-                    Err(e) => {println!("Timeout error: {e}")},
-                    Ok(_) => {},
+                if let Err(e) = result {
+                    println!("Timeout error: {e}");
                 }
-            },
+            }
             _ => {
                 break;
             }
